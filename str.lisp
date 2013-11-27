@@ -79,26 +79,63 @@
     (iter rope))
   rope)
 
-(defun str (&rest objects)
-  (cond ((endp objects)
-	 (str ""))
-	((= 1 (length objects))
-	 (let ((obj (first objects)))
-	   (typecase obj
-	     (null "")
-	     (symbol (str (string-downcase (symbol-name obj))))
-	     (string obj)
-	     (pathname (format nil "~A" obj))
-	     (t (string obj)))))
-	(t
-	 (apply #'concatenate 'string
-		(mapcar 'str objects)))))
+;;  STR
+
+(defgeneric atom-str (x))
+
+(defmethod atom-str (x)
+  (string x))
+
+(defmethod atom-str ((x null))
+  "")
+
+(defmethod atom-str ((x symbol))
+  (string-downcase (symbol-name x)))
+
+(defmethod atom-str ((x string))
+  x)
+
+(defmethod atom-str ((x pathname))
+  (namestring x))
+
+(defmethod atom-str ((x integer))
+  (format nil "~D" x))
+
+(defun walk-str (fn str)
+  (labels ((walk (x)
+	     (if (typep x 'sequence)
+		 (map nil #'walk x)
+		 (funcall fn (atom-str x)))))
+    (walk str)))
+
+(defun str (&rest parts)
+  (with-output-to-string (s)
+    (walk-str (lambda (x) (write-string x s))
+	      parts)))
 
 (define-compiler-macro str (&whole form &rest parts)
   (let ((merged (rope-merge parts)))
     (if (eq merged parts)
 	form
 	`(str ,@merged))))
+
+(defun write-str (stream &rest parts)
+  (walk-str (lambda (x) (write-string x stream))
+	    parts))
+
+(defgeneric to-str (x))
+
+(defmethod to-str (x)
+  (atom-str x))
+
+(defmethod to-str ((x sequence))
+  (with-output-to-string (out)
+    (labels ((str<< (y)
+	       (if (typep y 'sequence)
+		   (map nil #'str<< y)
+		   (write-string (atom-str y) out))))
+      (str<< x))))
+
 
 (defun write-rope (rope &optional (stream *standard-output*))
   (dolist (x rope)
