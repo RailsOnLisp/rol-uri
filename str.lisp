@@ -24,9 +24,10 @@
        (cond
 	 ,@(mapcar (lambda (case-decl)
 		     (destructuring-bind (match &rest match-body) case-decl
-		       (if (stringp match)
-			   `((find ,g!char ,match) ,@match-body)
-			   `(,match ,@match-body))))
+		       (typecase match
+			 (string `((find ,g!char ,match) ,@match-body))
+			 (null `((null ,g!char) ,@match-body))
+			 (t `(,match ,@match-body)))))
 		   cases)))))
 
 (defun rope-merge (rope)
