@@ -22,9 +22,20 @@
   (:nicknames :L>uri)
   (:use :cl :alexandria)
   (:export
-   #:str #:atom-str #:walk-str #:write-str
-   #:rope-merge #:rope-nmerge #:write-rope
+   ;;  Char
    #:case-char
-   #:uri-template #:uri-template-expand
+   ;;  Str
+   #:str
+   #:atom-str
+   #:walk-str
+   #:write-str
+   ;;  Rope
+   #:rope-merge
+   #:rope-nmerge
+   #:write-rope
+   ;;  URI
    #:canonical-document-uri
-   #:%-encode-char))
+   #:%-encode-char
+   ;;  URI Template
+   #:uri-template
+   #:uri-template-expand))
