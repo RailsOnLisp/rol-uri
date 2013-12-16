@@ -31,7 +31,7 @@
 
 (define-constant +gen-delims+ ":/?#[]@" :test 'string=)
 (define-constant +sub-delims+ "!$&'()*+,;=" :test 'string=)
-(define-constant +reserved+ (concatenate 'string +gen-delims+ +sub-delims+)
+(define-constant +reserved+ (str +gen-delims+ +sub-delims+)
   :test 'string=)
 
 (defun char-unreserved-p (c)

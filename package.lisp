@@ -38,4 +38,11 @@
    #:%-encode-char
    ;;  URI Template
    #:uri-template
-   #:uri-template-expand))
+   #:uri-template-p
+   #:uri-template-string
+   #:expand-uri
+   ;;  URI Template vars
+   #:uri-var
+   #:uri-var-p
+   #:uri-let
+   #:compile-uri-template-matcher))
