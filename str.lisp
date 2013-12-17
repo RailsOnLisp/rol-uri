@@ -104,9 +104,10 @@
 
 (defun walk-str (fn str)
   (labels ((walk (x)
-	     (if (typep x 'sequence)
-		 (map nil #'walk x)
-		 (funcall fn (atom-str x)))))
+	     (typecase x
+	       (string (funcall fn x))
+	       (sequence (map nil #'walk x))
+	       (t (funcall fn (atom-str x))))))
     (walk str)))
 
 (defun str (&rest parts)
