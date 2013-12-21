@@ -85,7 +85,7 @@
 (defgeneric atom-str (x))
 
 (defmethod atom-str (x)
-  (string x))
+  (format nil "~A" x))
 
 (defmethod atom-str ((x null))
   "")
