@@ -33,12 +33,19 @@
 (define-constant +sub-delims+ "!$&'()*+,;=" :test 'string=)
 (define-constant +reserved+ (str +gen-delims+ +sub-delims+)
   :test 'string=)
+(define-constant +unreserved+ (str "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+				   "abcdefghijklmnopqrstuvwxyz"
+				   "0123456789-._~")
+  :test 'string=)
 
-(defun char-unreserved-p (c)
+(defun unreserved-char-p (c)
   (or (<= (char-code #\A) (char-code c) (char-code #\Z))
       (<= (char-code #\a) (char-code c) (char-code #\z))
       (<= (char-code #\0) (char-code c) (char-code #\9))
       (find c "-._~")))
+
+(defun not-reserved-char-p (c)
+  (not (find c +reserved+)))
 
 (defun %-encode-char (c &key stream (reserved +reserved+))
   (if (null stream)
@@ -51,3 +58,52 @@
 	      (write-char #\% stream)
 	      (write (svref b i) :base 16 :case :upcase :stream stream)))
 	  (write-char c stream))))
+
+(defun uri-char-p (c)
+  (or (unreserved-char-p c)
+      (find c +reserved+)))
+
+(defun hex-digit-p (c)
+  (when (or (char<= #\0 c #\9)
+	    (char<= #\A c #\Z)
+	    (char<= #\a c #\z))
+    c))
+
+(defun %-encode-bytes (bytes &optional stream)
+  (let ((*print-base* 16)
+	(len (length bytes)))
+    (labels ((eat (i)
+	       (when (< i len)
+		 (write-char #\% stream)
+		 (write (the (unsigned-byte 8) (aref bytes i))
+			:base 16 :stream stream)
+		 (eat (1+ i)))))
+      (eat 0))))
+
+(defun %-encode (string &optional stream (allowed-char-p #'uri-char-p))
+  (let ((len (length string)))
+    (labels ((eat (i)
+	       (cond ((<= len i) nil)
+		     ((and (< (+ 2 i) len)
+			   (char= #\% (char string i))
+			   (hex-digit-p (char string (+ 1 i)))
+			   (hex-digit-p (char string (+ 2 i))))
+		      (write-string string stream :start i :end (+ 3 i))
+		      (eat (+ 3 i)))
+		     ((funcall allowed-char-p (char string i))
+		      (write-char (char string i) stream)
+		      (eat (1+ i)))
+		     (t
+		      (%-encode-bytes
+		       (trivial-utf-8:string-to-utf-8-bytes
+			(subseq string i (1+ i)))
+		       stream)
+		      (eat (1+ i))))))
+      (if (null stream)
+	  (with-output-to-string (out)
+	    (setq stream out)
+	    (eat 0))
+	  (eat 0)))))
+
+#+test
+(%-encode "plop/%é%C3")

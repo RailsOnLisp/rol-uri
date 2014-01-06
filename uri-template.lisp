@@ -237,36 +237,52 @@ URI-TEMPLATE."
 	s
 	(subseq s 0 n))))
 
-(defgeneric expand-value (x)
-  (:documentation "Prints the expansion of X to *STANDARD-OUTPUT*"))
-
-(defmethod expand-value ((x t))
-  (with-output-to-string (out)
-    (princ x out)))
+(defgeneric expand-value (thing)
+  (:documentation "Returns the expansion of THING as a string."))
 
 (defmethod expand-value ((x null))
   "")
 
 (defmethod expand-value ((x string))
-  x)
+  (%-encode x nil (if *op* #'uri-char-p #'unreserved-char-p)))
 
 (defun expand-alist (alist separator assoc stream)
-  (unless (endp alist)
-    (princ (caar alist) stream)
-    (princ assoc stream)
-    (princ (cdar alist) stream)
-    (dolist (a (cdr alist))
-      (princ separator stream)
-      (princ (car a) stream)
-      (princ assoc stream)
-      (princ (cdr a) stream))))
+  (labels ((eat (l)
+	     (unless (endp l)
+	       (destructuring-bind (key . value) (first l)
+		 (let ((expanded (expand-value value)))
+		   (unless (emptyp expanded)
+		     (write-char separator stream)
+		     (write-string key stream)
+		     (write-char assoc stream)
+		     (write-string expanded stream))))
+	       (eat (rest l))))
+	   (eat-first (l)
+	     (unless (endp l)
+	       (destructuring-bind (key . value) (first l)
+		 (let ((expanded (expand-value value)))
+		   (cond ((emptyp expanded) (eat-first (rest l)))
+			 (:otherwise (write-string key stream)
+				     (write-char assoc stream)
+				     (write-string expanded stream)
+				     (eat (rest l)))))))))
+    (eat-first alist)))
 
 (defun expand-list (list separator stream)
-  (unless (endp list)
-    (princ (car list) stream)
-    (dolist (a (cdr list))
-      (princ separator stream)
-      (princ a stream))))
+  (labels ((eat (l)
+	     (unless (endp l)
+	       (let ((expanded (expand-value (first l))))
+		 (unless (emptyp expanded)
+		   (write-char separator stream)
+		   (write-string expanded stream)))
+	       (eat (rest l))))
+	   (eat-first (l)
+	     (unless (endp l)
+	       (let ((expanded (expand-value (first l))))
+		 (cond ((emptyp expanded) (eat-first (rest l)))
+		       (:otherwise (write-string expanded stream)
+				   (eat (rest l))))))))
+    (eat-first list)))
 
 (defmethod expand-value ((x cons))
   (with-output-to-string (o)
@@ -280,10 +296,11 @@ URI-TEMPLATE."
     (values
      (do-uri-template template
        :string (lambda (x) `(write-string ,x ,stream-var))
-       :op (lambda (op &rest v) `(let ((*separator* ,*separator*))
+       :op (lambda (op &rest v) `(let ((*op* ,op)
+				       (*separator* ,*separator*))
 				   ,@(when-let ((pre (op-prefix op)))
-					       `((write-char ,pre ,stream-var)))
-				   (expand-list (remove-if #'null (list ,@v))
+				       `((write-char ,pre ,stream-var)))
+				   (expand-list (list ,@v)
 						,*separator* stream)))
        :explode (lambda (v) `(let ((*separator* ,*separator*)) ,v))
        :prefix (lambda (n v) `(prefix ,n ,v))
@@ -291,7 +308,7 @@ URI-TEMPLATE."
      vars)))
 
 #+nil
-(uri-template-expander-code "/assets{/plop*}")
+(uri-template-expand-code "/assets{/plop*}")
 
 (defun compile-uri-template-expand-function (template)
   (format *debug-io* "~&; compiling ~S~%" template)
@@ -323,6 +340,12 @@ URI-TEMPLATE."
   (apply (uri-template-expand-function uri) output vars))
 
 #+test
+(expand-uri nil "/assets/{path}" :path "Mathématiques")
+
+#+test
+(expand-uri nil "/assets/{path}" :path "abc%/")
+
+#+test
 (time
  (let ((template (uri-template "/assets/{+path,pat,path}")))
    (dotimes (i 100000)
@@ -346,11 +369,13 @@ URI-TEMPLATE."
   (declare (ignore var))
   (let ((char-regex
 	 (case-char op
-	   (nil '(:property char-unreserved-p))
+	   (nil '(:alternation
+		  (:property not-reserved-char-p)
+		  (:sequence #\% :digit-class :digit-class)))
 	   ("+#./;?&" `(:alternation
-			(:property char-unreserved-p)
-			(:char-class ,@(coerce +reserved+ 'list))
-			(:sequence #\% :digit-class :digit-class))))))
+			(:property not-reserved-char-p)
+			(:sequence #\% :digit-class :digit-class)
+			(:char-class ,@(coerce +reserved+ 'list)))))))
     `(:sequence
       #1=(:greedy-repetition 1 nil ,char-regex)
       (:non-greedy-repetition 0 nil (:sequence ,(op-separator op) #1#)))))
