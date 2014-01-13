@@ -20,19 +20,8 @@
 
 (defpackage :lowh.triangle.uri
   (:nicknames :L>uri)
-  (:use :cl :alexandria)
+  (:use :cl :alexandria :str)
   (:export
-   ;;  Char
-   #:case-char
-   ;;  Str
-   #:str
-   #:atom-str
-   #:walk-str
-   #:write-str
-   ;;  Rope
-   #:rope-merge
-   #:rope-nmerge
-   #:write-rope
    ;;  URI
    #:canonical-document-uri
    #:%-encode-char

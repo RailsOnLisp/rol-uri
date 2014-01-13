@@ -28,9 +28,8 @@
   :author "Thomas de Grivel <thomas@lowh.net>"
   :version "0.1"
   :description "String and URI library"
-  :depends-on ("alexandria" "trivial-utf-8")
+  :depends-on ("alexandria" "str" "trivial-utf-8")
   :components
   ((:file "package")
-   (:file "str" :depends-on ("package"))
-   (:file "uri" :depends-on ("str"))
+   (:file "uri" :depends-on ("package"))
    (:file "uri-template" :depends-on ("uri"))))
