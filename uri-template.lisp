@@ -246,6 +246,9 @@ URI-TEMPLATE."
 (defmethod expand-value ((x string))
   (%-encode x nil (if *op* #'uri-char-p #'unreserved-char-p)))
 
+(defmethod expand-value ((x t))
+  (expand-value (the string (str x))))
+
 (defun expand-alist (alist separator assoc stream)
   (labels ((eat (l)
 	     (unless (endp l)
