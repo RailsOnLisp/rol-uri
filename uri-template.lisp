@@ -374,6 +374,7 @@ URI-TEMPLATE."
 	 (case-char op
 	   (nil '(:alternation
 		  (:property not-reserved-char-p)
+		  (:char-class #\@)
 		  (:sequence #\% :digit-class :digit-class)))
 	   ("+#./;?&" `(:alternation
 			(:property not-reserved-char-p)
