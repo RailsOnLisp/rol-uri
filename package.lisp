@@ -25,6 +25,8 @@
    ;;  URI
    #:canonical-document-uri
    #:%-encode-char
+   #:to-url
+   #:unaccent
    ;;  URI Template
    #:uri-template
    #:uri-template-p
