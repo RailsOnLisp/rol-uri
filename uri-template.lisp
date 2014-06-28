@@ -384,6 +384,11 @@ URI-TEMPLATE."
       #1=(:greedy-repetition 1 nil ,char-regex)
       (:non-greedy-repetition 0 nil (:sequence ,(op-separator op) #1#)))))
 
+(defun var-name (var)
+  (if (consp var)
+      (string (second var))
+      (string var)))
+
 (defun uri-template-regex (template)
   (let ((vars))
     (values
@@ -394,7 +399,7 @@ URI-TEMPLATE."
 	     `(:sequence
 	       ,@(when (op-prefix op) `(,(op-prefix op)))
 	       ,@(reduce (lambda (exp var)
-			   `((:named-register ,(string var)
+			   `((:named-register ,(var-name var)
 					      ,(var-regex op var))
 			     ,@(when exp `((:greedy-repetition
 					    0 1 (:sequence ,(op-separator op)
