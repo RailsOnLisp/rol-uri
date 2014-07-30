@@ -246,6 +246,9 @@ URI-TEMPLATE."
 (defmethod expand-value ((x string))
   (%-encode x nil (if *op* #'uri-char-p #'unreserved-char-p)))
 
+(defmethod expand-value ((x symbol))
+  (expand-value (string-downcase (symbol-name x))))
+
 (defmethod expand-value ((x t))
   (expand-value (the string (str x))))
 
@@ -368,8 +371,7 @@ URI-TEMPLATE."
 
 ;;  Destructuring regex
 
-(defun var-regex (op var)
-  (declare (ignore var))
+(defun var-regex (op)
   (let ((char-regex
 	 (case-char op
 	   (nil '(:alternation
@@ -389,8 +391,19 @@ URI-TEMPLATE."
       (string (second var))
       (string var)))
 
+(defun explode (op)
+  (lambda (var)
+    (cl-ppcre:split `(:char-class ,(explode-separator op)) var)))
+
+(defun var-binding (op var)
+  (if (consp var)
+      (case (car var)
+	((explode) `(,(explode op) ,(second var)))
+	(:otherwise var))
+      var))
+
 (defun uri-template-regex (template)
-  (let ((vars))
+  (let (bindings)
     (values
      (do-uri-template template
        :parts (lambda (&rest parts)
@@ -399,19 +412,17 @@ URI-TEMPLATE."
 	     `(:sequence
 	       ,@(when (op-prefix op) `(,(op-prefix op)))
 	       ,@(reduce (lambda (exp var)
+			   (push (var-binding op var) bindings)
 			   `((:named-register ,(var-name var)
-					      ,(var-regex op var))
+					      ,(var-regex op))
 			     ,@(when exp `((:greedy-repetition
 					    0 1 (:sequence ,(op-separator op)
 							   ,@exp))))))
 			 (reverse vars) :initial-value nil)))
        :explode (lambda (var) `(explode ,var))
-       :prefix (lambda (n var) `(prefix ,var ,n))
-       :var (lambda (var)
-	      (let ((sym (uri-var var)))
-		(push sym vars)
-		sym)))
-     (nreverse vars))))
+       :prefix (lambda (n var) `(prefix ,n ,var))
+       :var #'uri-var)
+     (nreverse bindings))))
 
 (defun uri-template-matcher (template body)
   (let ((string (gensym "STRING-")))
