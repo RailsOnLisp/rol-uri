@@ -18,8 +18,8 @@
 
 (in-package :cl-user)
 
-(defpackage :lowh.triangle.uri
-  (:nicknames :L>uri)
+(defpackage :RoL-uri
+  (:nicknames :L>uri :lowh.triangle.uri)
   (:use :cl :alexandria :str)
   (:export
    ;;  URI

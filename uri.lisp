@@ -16,7 +16,7 @@
 ;;  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ;;
 
-(in-package :L>uri)
+(in-package :RoL-uri)
 
 ;;  Canonical URI
 

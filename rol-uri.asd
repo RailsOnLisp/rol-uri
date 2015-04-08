@@ -1,7 +1,7 @@
 ;;
-;;  Triangle
+;;  RoL-uri  -  URL and URI utilities
 ;;
-;;  Copyright 2012,2013 Thomas de Grivel <thomas@lowh.net>
+;;  Copyright 2012-2015 Thomas de Grivel <thomas@lowh.net>
 ;;
 ;;  Permission to use, copy, modify, and distribute this software for any
 ;;  purpose with or without fee is hereby granted, provided that the above
@@ -18,13 +18,13 @@
 
 (in-package #:cl-user)
 
-(defpackage #:lowh.triangle.uri.system
+(defpackage #:RoL-uri.system
   (:use #:cl #:asdf))
 
-(in-package #:lowh.triangle.uri.system)
+(in-package #:RoL-uri.system)
 
-(defsystem lowh.triangle.uri
-  :name "lowh.triangle.uri"
+(asdf:defsystem :RoL-uri
+  :name "RoL-uri"
   :author "Thomas de Grivel <thomas@lowh.net>"
   :version "0.1"
   :description "String and URI library"

@@ -16,7 +16,7 @@
 ;;  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ;;
 
-(in-package :L>uri)
+(in-package :RoL-uri)
 
 ;;  RFC 6570 - URI Template
 
@@ -71,13 +71,13 @@ at least one URI Template operator. Otherwise NIL is returned.
 ;;  URI vars
 
 (defparameter *uri-vars-package*
-  (let ((pkg (find-package :L>uri.vars)))
+  (let ((pkg (find-package :RoL-uri.vars)))
     (when pkg
       (do-symbols (sym pkg)
 	(unexport sym pkg)
 	(unintern sym pkg)))
-    (defpackage lowh.triangle.uri.vars
-      (:nicknames :L>uri.vars)))
+    (defpackage :RoL-uri.vars
+      (:nicknames :L>uri.vars :lowh.triangle.uri.vars)))
   "All uri variable names are interned in this package.")
 
 (defun uri-var (name)
