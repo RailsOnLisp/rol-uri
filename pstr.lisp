@@ -1,7 +1,7 @@
 ;;
-;;  Triangle
+;;  RoL-uri  -  URL and URI utilities
 ;;
-;;  Copyright 2012,2013 Thomas de Grivel <thomas@lowh.net>
+;;  Copyright 2012-2015 Thomas de Grivel <thomas@lowh.net>
 ;;
 ;;  Permission to use, copy, modify, and distribute this software for any
 ;;  purpose with or without fee is hereby granted, provided that the above
