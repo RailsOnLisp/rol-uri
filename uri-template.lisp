@@ -430,6 +430,8 @@ URI-TEMPLATE."
       `(lambda (,string)
 	 (cl-ppcre:register-groups-bind ,vars
 	     (,(cl-ppcre:create-scanner regex) ,string)
+           (declare (ignorable ,@(mapcar (lambda (v) (uri-var (var-name v)))
+                                         vars)))
 	   ,@body)))))
 
 (defun compile-uri-template-matcher (template body)
