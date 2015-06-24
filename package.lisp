@@ -33,6 +33,8 @@
    #:uri-template-string
    #:expand-uri
    ;;  URI Template vars
+   #:uri-template-vars
+   #:with-uri-template-vars
    #:uri-var
    #:uri-var-p
    #:uri-let

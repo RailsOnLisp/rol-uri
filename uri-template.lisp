@@ -185,21 +185,29 @@ URI-TEMPLATE."
 		 (funcall var x)
 		 (destructuring-bind (a b &optional c) x
 		   (ecase a
-		     ((explode) (let ((*separator* (explode-separator *op*)))
-				  (funcall explode (funcall var b))))
-		     ((prefix) (funcall prefix b (funcall var c)))))))
+		     ((explode) (if explode
+                                    (let ((*separator* (explode-separator *op*)))
+                                      (funcall explode (funcall var b)))
+                                    (funcall var b)))
+                     ((prefix) (if prefix
+                                   (funcall prefix b (funcall var c))
+                                   (funcall var c)))))))
 	   (do-part (part)
 	     (typecase part
-	       (string (funcall string part))
+	       (string (when string (funcall string part)))
 	       (cons (destructuring-bind (op-char &rest vars) part
-		       (let ((*op* op-char)
-			     (*separator* (op-separator op-char)))
-			 (apply op op-char (remove-if
-					    #'null
-					    (mapcar #'do-var vars)))))))))
+                       (if op
+                           (let ((*op* op-char)
+                                 (*separator* (op-separator op-char)))
+                             (apply op op-char (remove-if
+                                                #'null
+                                                (mapcar #'do-var vars))))
+                           (map nil #'do-var vars)))))))
     (when (stringp template)
       (setq template (uri-template template)))
-    (apply parts (mapcar #'do-part (uri-template-parts template)))))
+    (if parts
+        (apply parts (mapcar #'do-part (uri-template-parts template)))
+        (map 'nil #'do-part (uri-template-parts template)))))
 
 ;;  Print
 
@@ -402,6 +410,21 @@ URI-TEMPLATE."
 	(:otherwise var))
       var))
 
+(defun uri-template-vars (template)
+  (let (bindings)
+     (do-uri-template template
+       :parts nil
+       :op nil
+       :var (lambda (var)
+              (push (uri-var var) bindings)))
+     (nreverse bindings)))
+
+(defmacro with-uri-template-vars (template &body body)
+  `(let ,(mapcar (lambda (var)
+                   `(,(intern (symbol-name var)) ,var))
+                 (uri-template-vars template))
+     ,@body))
+
 (defun uri-template-regex (template)
   (let (bindings)
     (values
@@ -430,9 +453,14 @@ URI-TEMPLATE."
       `(lambda (,string)
 	 (cl-ppcre:register-groups-bind ,vars
 	     (,(cl-ppcre:create-scanner regex) ,string)
-           (declare (ignorable ,@(mapcar (lambda (v) (uri-var (var-name v)))
-                                         vars)))
-	   ,@body)))))
+           (let ,(mapcar (lambda (var)
+                           `(,(intern (var-name var))
+                              ,(uri-var (var-name var))))
+                         vars)
+             (declare (ignorable ,@(mapcar (lambda (var)
+                                             (intern (var-name var)))
+                                           vars)))
+             ,@body))))))
 
 (defun compile-uri-template-matcher (template body)
   (compile nil (uri-template-matcher template body)))
