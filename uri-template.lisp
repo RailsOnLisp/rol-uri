@@ -320,7 +320,7 @@ URI-TEMPLATE."
   (format *debug-io* "~&; compiling ~S~%" template)
   (multiple-value-bind (code vars)
       (uri-template-expand-code template 'stream)
-    (compile nil `(lambda (stream &key ,@vars)
+    (compile nil `(lambda (stream &key ,@vars &allow-other-keys)
 		    (declare (type stream stream)
 			     (special ,@vars))
 		    ,@code))))
