@@ -38,4 +38,6 @@
    #:uri-var
    #:uri-var-p
    #:uri-let
+   ;;  Matcher
+   #:uri-template-match
    #:compile-uri-template-matcher))

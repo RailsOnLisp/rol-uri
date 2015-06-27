@@ -480,4 +480,5 @@ URI-TEMPLATE."
   (multiple-value-bind (regex vars) (uri-template-regex template)
     `(cl-ppcre:register-groups-bind ,vars (,(cl-ppcre:create-scanner regex)
 					    ,string)
-       ,@body)))
+       (with-uri-template-vars ,template
+         ,@body))))
