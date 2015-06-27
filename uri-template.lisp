@@ -312,17 +312,21 @@ URI-TEMPLATE."
   (let (vars)
     (values
      (do-uri-template template
-       :string (lambda (x) `(write-string ,x ,stream-var))
-       :op (lambda (op &rest v) `(let ((*op* ,op)
-				       (*separator* ,*separator*))
-				   ,@(when-let ((pre (op-prefix op)))
-				       `((write-char ,pre ,stream-var)))
-				   (expand-list (list ,@v)
-						,*separator* stream)))
+       :string (lambda (x) `((write-string ,x ,stream-var)))
+       :parts #'append
+       :op (lambda (op &rest vs)
+             (mapcar (lambda (v)
+                       `(when ,(car (last v))
+                          ,@(when-let ((pre (op-prefix op)))
+                              `((write-char ,pre ,stream-var)))
+                          (let ((*op* ,op)
+                                (*separator* ,*separator*))
+                            (write-string ,v ,stream-var))))
+                     vs))
        :explode (lambda (v) `(let ((*separator* ,*separator*)) ,v))
        :prefix (lambda (n v) `(prefix ,n ,v))
        :var (lambda (v) (pushnew v vars) `(expand-value ,v)))
-     vars)))
+     (nreverse vars))))
 
 #+nil
 (uri-template-expand-code "/assets{/plop*}")
