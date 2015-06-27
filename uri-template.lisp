@@ -155,6 +155,9 @@ URI-TEMPLATE."
 
 (defvar *uri-templates* (make-hash-table :test 'equal :weakness :value))
 
+(defun clear-uri-templates-cache ()
+  (setq *uri-templates* (make-hash-table :test 'equal :weakness :value)))
+
 (defun uri-template (thing)
   (typecase thing
     (string (or (gethash thing *uri-templates*)
