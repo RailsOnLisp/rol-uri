@@ -52,8 +52,9 @@
       (with-output-to-string (s)
 	(%-encode-char c :stream s :reserved reserved))
       (if (find c reserved)
-	  (let ((b (trivial-utf-8:string-to-utf-8-bytes
-		    (make-string 1 :initial-element c))))
+	  (let ((b (babel:string-to-octets
+		    (make-string 1 :initial-element c)
+		    :encoding :utf-8)))
 	    (dotimes (i (length b))
 	      (write-char #\% stream)
 	      (write (svref b i) :base 16 :case :upcase :stream stream)))
@@ -95,8 +96,9 @@
 		      (eat (1+ i)))
 		     (t
 		      (%-encode-bytes
-		       (trivial-utf-8:string-to-utf-8-bytes
-			(subseq string i (1+ i)))
+		       (babel:string-to-octets
+			(subseq string i (1+ i))
+			:encoding :utf-8)
 		       stream)
 		      (eat (1+ i))))))
       (if (null stream)
