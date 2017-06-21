@@ -54,10 +54,10 @@
 
 (defclass uri-template ()
   ((parts :type list
-	  :initarg :parts
-	  :accessor uri-template-parts)
+          :initarg :parts
+          :accessor uri-template-parts)
    (expand-function :type function
-		    :reader uri-template-expand-function)))
+                    :reader uri-template-expand-function)))
 
 (defun uri-template-p (thing)
   "
@@ -74,8 +74,8 @@ at least one URI Template operator. Otherwise NIL is returned.
   (let ((pkg (find-package :RoL-uri.vars)))
     (when pkg
       (do-symbols (sym pkg)
-	(unexport sym pkg)
-	(unintern sym pkg)))
+        (unexport sym pkg)
+        (unintern sym pkg)))
     (defpackage :RoL-uri.vars
       (:nicknames :L>uri.vars :lowh.triangle.uri.vars)))
   "All uri variable names are interned in this package.")
@@ -93,21 +93,21 @@ at least one URI Template operator. Otherwise NIL is returned.
 (deftype uri-var ()
   "The type of all uri variables."
   `(and symbol
-	(satisfies uri-var-p)))
+        (satisfies uri-var-p)))
 
 (defmacro uri-let (bindings &body body)
   "Create dynamic bindings for URI variables and lexical bindings to
 access them in BODY."
   (let ((bindings (mapcar (lambda (b) (if (consp b) b (list b nil)))
-			  bindings)))
+                          bindings)))
     `(let ,(mapcar (lambda (b) `(,(uri-var (car b)) ,(cadr b)))
-		   bindings)
+                   bindings)
        (declare (special ,@(mapcar (lambda (b) (uri-var (car b)))
-				   bindings)))
+                                   bindings)))
        (symbol-macrolet ,(mapcar (lambda (b)
-				   `(,(car b) ,(uri-var (car b))))
-				 bindings)
-	 ,@body))))
+                                   `(,(car b) ,(uri-var (car b))))
+                                 bindings)
+         ,@body))))
 
 ;;  Read
 
@@ -115,40 +115,40 @@ access them in BODY."
   "Read a URI Template string as per RFC 6570 and return an instance of
 URI-TEMPLATE."
   (labels ((read/var (s)
-	     (cl-ppcre:register-groups-bind (name prefix explode)
-		 (#.(str "(" #1="(?:[0-9A-Za-z_]|%[0-9][0-9])"
-			 "(?:[.]?" #1# ")*)(?::(.*)|([*]))?$")
-		    s)
-	       (let ((sym (uri-var (string-upcase name))))
-		 (cond (prefix  `(prefix ,(parse-integer prefix) ,sym))
-		       (explode `(explode ,sym))
-		       (t       sym)))))
-	   (read/part (s)
-	     (cond ((char= #\{ (char s 0))
-		    (let ((start 1)
-			  (end (1- (length s))))
-		      (assert (char= #\} (char s end)))
-		      (let ((op (find (char s 1) +operator+)))
-			(when op (incf start))
-			(let ((vars (mapcar #'read/var
-					    (cl-ppcre:split "," s
-							    :start start
-							    :end end))))
-			  `(,op ,@vars)))))
-		   (t s))))
+             (cl-ppcre:register-groups-bind (name prefix explode)
+                 (#.(str "(" #1="(?:[0-9A-Za-z_]|%[0-9][0-9])"
+                         "(?:[.]?" #1# ")*)(?::(.*)|([*]))?$")
+                    s)
+               (let ((sym (uri-var (string-upcase name))))
+                 (cond (prefix  `(prefix ,(parse-integer prefix) ,sym))
+                       (explode `(explode ,sym))
+                       (t       sym)))))
+           (read/part (s)
+             (cond ((char= #\{ (char s 0))
+                    (let ((start 1)
+                          (end (1- (length s))))
+                      (assert (char= #\} (char s end)))
+                      (let ((op (find (char s 1) +operator+)))
+                        (when op (incf start))
+                        (let ((vars (mapcar #'read/var
+                                            (cl-ppcre:split "," s
+                                                            :start start
+                                                            :end end))))
+                          `(,op ,@vars)))))
+                   (t s))))
     (let (parts chars)
       (flet ((push-part ()
-	       (when chars
-		 (push (read/part (coerce (nreverse chars) 'string))
-		       parts)
-		 (setf chars nil))))
-	(dotimes (i (length string))
-	  (let ((c (char string i)))
-	    (cond
-	      ((char= #\{ c) (push-part) (push c chars))
-	      ((char= #\} c) (push c chars) (push-part))
-	      (t (push c chars)))))
-	(push-part))
+               (when chars
+                 (push (read/part (coerce (nreverse chars) 'string))
+                       parts)
+                 (setf chars nil))))
+        (dotimes (i (length string))
+          (let ((c (char string i)))
+            (cond
+              ((char= #\{ c) (push-part) (push c chars))
+              ((char= #\} c) (push c chars) (push-part))
+              (t (push c chars)))))
+        (push-part))
       (make-instance 'uri-template :parts (nreverse parts)))))
 
 ;;  Cache
@@ -161,8 +161,8 @@ URI-TEMPLATE."
 (defun uri-template (thing)
   (typecase thing
     (string (or (gethash thing *uri-templates*)
-		(setf (gethash thing *uri-templates*)
-		      (read-uri-template-from-string thing))))
+                (setf (gethash thing *uri-templates*)
+                      (read-uri-template-from-string thing))))
     (uri-template thing)))
 
 (defmethod make-load-form ((uri-template uri-template) &optional env)
@@ -181,24 +181,24 @@ URI-TEMPLATE."
 ;;  Eval
 
 (defun do-uri-template (template &key (parts #'list) (string #'identity)
-				      (op #'list) explode prefix
-				      (var #'identity))
+                                      (op #'list) explode prefix
+                                      (var #'identity))
   (labels ((do-var (x)
-	     (if (symbolp x)
-		 (funcall var x)
-		 (destructuring-bind (a b &optional c) x
-		   (ecase a
-		     ((explode) (if explode
+             (if (symbolp x)
+                 (funcall var x)
+                 (destructuring-bind (a b &optional c) x
+                   (ecase a
+                     ((explode) (if explode
                                     (let ((*separator* (explode-separator *op*)))
                                       (funcall explode (funcall var b)))
                                     (funcall var b)))
                      ((prefix) (if prefix
                                    (funcall prefix b (funcall var c))
                                    (funcall var c)))))))
-	   (do-part (part)
-	     (typecase part
-	       (string (when string (funcall string part)))
-	       (cons (destructuring-bind (op-char &rest vars) part
+           (do-part (part)
+             (typecase part
+               (string (when string (funcall string part)))
+               (cons (destructuring-bind (op-char &rest vars) part
                        (if op
                            (let ((*op* op-char)
                                  (*separator* (op-separator op-char)))
@@ -232,21 +232,21 @@ URI-TEMPLATE."
 
 (defmacro with-uri-vars (vars &body body)
   (let ((unbound-vars (gensym "UNBOUND-VARS-"))
-	(nils (gensym "NILS")))
+        (nils (gensym "NILS")))
     `(locally (declare (special ,@vars)) ;; (sb-ext:muffle-conditions warning)
        (let (,unbound-vars ,nils)
-	 (dolist (v ',vars)
-	   (when (not (boundp v))
-	     (push v ,unbound-vars)
-	     (push nil ,nils)))
-	 (progv unbound-vars nils
-	   ,@body)))))
+         (dolist (v ',vars)
+           (when (not (boundp v))
+             (push v ,unbound-vars)
+             (push nil ,nils)))
+         (progv unbound-vars nils
+           ,@body)))))
 
 (defun prefix (n s)
   (when s
     (if (<= (length s) n)
-	s
-	(subseq s 0 n))))
+        s
+        (subseq s 0 n))))
 
 (defgeneric expand-value (thing)
   (:documentation "Returns the expansion of THING as a string."))
@@ -265,47 +265,47 @@ URI-TEMPLATE."
 
 (defun expand-alist (alist separator assoc stream)
   (labels ((eat (l)
-	     (unless (endp l)
-	       (destructuring-bind (key . value) (first l)
-		 (let ((expanded (expand-value value)))
-		   (unless (emptyp expanded)
-		     (write-char separator stream)
-		     (write-string key stream)
-		     (write-char assoc stream)
-		     (write-string expanded stream))))
-	       (eat (rest l))))
-	   (eat-first (l)
-	     (unless (endp l)
-	       (destructuring-bind (key . value) (first l)
-		 (let ((expanded (expand-value value)))
-		   (cond ((emptyp expanded) (eat-first (rest l)))
-			 (:otherwise (write-string key stream)
-				     (write-char assoc stream)
-				     (write-string expanded stream)
-				     (eat (rest l)))))))))
+             (unless (endp l)
+               (destructuring-bind (key . value) (first l)
+                 (let ((expanded (expand-value value)))
+                   (unless (emptyp expanded)
+                     (write-char separator stream)
+                     (write-string key stream)
+                     (write-char assoc stream)
+                     (write-string expanded stream))))
+               (eat (rest l))))
+           (eat-first (l)
+             (unless (endp l)
+               (destructuring-bind (key . value) (first l)
+                 (let ((expanded (expand-value value)))
+                   (cond ((emptyp expanded) (eat-first (rest l)))
+                         (:otherwise (write-string key stream)
+                                     (write-char assoc stream)
+                                     (write-string expanded stream)
+                                     (eat (rest l)))))))))
     (eat-first alist)))
 
 (defun expand-list (list separator stream)
   (labels ((eat (l)
-	     (unless (endp l)
-	       (let ((expanded (expand-value (first l))))
-		 (unless (emptyp expanded)
-		   (write-char separator stream)
-		   (write-string expanded stream)))
-	       (eat (rest l))))
-	   (eat-first (l)
-	     (unless (endp l)
-	       (let ((expanded (expand-value (first l))))
-		 (cond ((emptyp expanded) (eat-first (rest l)))
-		       (:otherwise (write-string expanded stream)
-				   (eat (rest l))))))))
+             (unless (endp l)
+               (let ((expanded (expand-value (first l))))
+                 (unless (emptyp expanded)
+                   (write-char separator stream)
+                   (write-string expanded stream)))
+               (eat (rest l))))
+           (eat-first (l)
+             (unless (endp l)
+               (let ((expanded (expand-value (first l))))
+                 (cond ((emptyp expanded) (eat-first (rest l)))
+                       (:otherwise (write-string expanded stream)
+                                   (eat (rest l))))))))
     (eat-first list)))
 
 (defmethod expand-value ((x cons))
   (with-output-to-string (o)
     (if (consp (car x))
-	(expand-alist x *separator* #\= o)
-	(expand-list x *separator* o))))
+        (expand-alist x *separator* #\= o)
+        (expand-list x *separator* o))))
 
 (defun uri-template-expand-code (template &optional (stream-var 'stream))
   (declare (type symbol stream-var))
@@ -336,15 +336,15 @@ URI-TEMPLATE."
   (multiple-value-bind (code vars)
       (uri-template-expand-code template 'stream)
     (compile nil `(lambda (stream &key ,@vars &allow-other-keys)
-		    (declare (type stream stream)
-			     (special ,@vars))
-		    ,@code))))
+                    (declare (type stream stream)
+                             (special ,@vars))
+                    ,@code))))
 
 (defmethod slot-unbound (class
-			 (template uri-template)
-			 (slot (eql 'expand-function)))
+                         (template uri-template)
+                         (slot (eql 'expand-function)))
     (setf (slot-value template 'expand-function)
-	  (compile-uri-template-expand-function template)))
+          (compile-uri-template-expand-function template)))
 
 (defgeneric expand-uri (output uri &rest vars &key &allow-other-keys))
 
@@ -388,15 +388,15 @@ URI-TEMPLATE."
 
 (defun var-regex (op)
   (let ((char-regex
-	 (case-char op
-	   (nil '(:alternation
-		  (:property not-reserved-char-p)
-		  (:char-class #\@)
-		  (:sequence #\% :digit-class :digit-class)))
-	   ("+#./;?&" `(:alternation
-			(:property not-reserved-char-p)
-			(:sequence #\% :digit-class :digit-class)
-			(:char-class ,@(coerce +reserved+ 'list)))))))
+         (case-char op
+           (nil '(:alternation
+                  (:property not-reserved-char-p)
+                  (:char-class #\@)
+                  (:sequence #\% :digit-class :digit-class)))
+           ("+#./;?&" `(:alternation
+                        (:property not-reserved-char-p)
+                        (:sequence #\% :digit-class :digit-class)
+                        (:char-class ,@(coerce +reserved+ 'list)))))))
     `(:sequence
       #1=(:greedy-repetition 1 nil ,char-regex)
       (:non-greedy-repetition 0 nil (:sequence ,(op-separator op) #1#)))))
@@ -413,8 +413,8 @@ URI-TEMPLATE."
 (defun var-binding (op var)
   (if (consp var)
       (case (car var)
-	((explode) `(,(explode op) ,(second var)))
-	(:otherwise var))
+        ((explode) `(,(explode op) ,(second var)))
+        (:otherwise var))
       var))
 
 (defun uri-template-vars (template)
@@ -437,18 +437,18 @@ URI-TEMPLATE."
     (values
      (do-uri-template template
        :parts (lambda (&rest parts)
-		`(:sequence :start-anchor ,@parts :end-anchor))
+                `(:sequence :start-anchor ,@parts :end-anchor))
        :op (lambda (op &rest vars)
-	     `(:sequence
-	       ,@(when (op-prefix op) `(,(op-prefix op)))
-	       ,@(reduce (lambda (exp var)
-			   (push (var-binding op var) bindings)
-			   `((:named-register ,(var-name var)
-					      ,(var-regex op))
-			     ,@(when exp `((:greedy-repetition
-					    0 1 (:sequence ,(op-separator op)
-							   ,@exp))))))
-			 (reverse vars) :initial-value nil)))
+             `(:sequence
+               ,@(when (op-prefix op) `(,(op-prefix op)))
+               ,@(reduce (lambda (exp var)
+                           (push (var-binding op var) bindings)
+                           `((:named-register ,(var-name var)
+                                              ,(var-regex op))
+                             ,@(when exp `((:greedy-repetition
+                                            0 1 (:sequence ,(op-separator op)
+                                                           ,@exp))))))
+                         (reverse vars) :initial-value nil)))
        :explode (lambda (var) `(explode ,var))
        :prefix (lambda (n var) `(prefix ,n ,var))
        :var #'uri-var)
@@ -458,8 +458,8 @@ URI-TEMPLATE."
   (let ((string (gensym "STRING-")))
     (multiple-value-bind (regex vars) (uri-template-regex template)
       `(lambda (,string)
-	 (cl-ppcre:register-groups-bind ,vars
-	     (,(cl-ppcre:create-scanner regex) ,string)
+         (cl-ppcre:register-groups-bind ,vars
+             (,(cl-ppcre:create-scanner regex) ,string)
            (let ,(mapcar (lambda (var)
                            `(,(intern (var-name var))
                               ,(uri-var (var-name var))))
@@ -480,12 +480,12 @@ URI-TEMPLATE."
 
 (defmacro uri-template-bind (vars (template string) &body body)
   `(cl-ppcre:register-groups-bind ,vars ((uri-template-regex ,template)
-					 ,string)
+                                         ,string)
      ,@body))
 
 (defmacro uri-template-match ((template string) &body body)
   (multiple-value-bind (regex vars) (uri-template-regex template)
     `(cl-ppcre:register-groups-bind ,vars (,(cl-ppcre:create-scanner regex)
-					    ,string)
+                                            ,string)
        (with-uri-template-vars ,template
          ,@body))))

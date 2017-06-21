@@ -29,9 +29,9 @@
   :version "0.1"
   :description "String and URI library"
   :depends-on ("alexandria"
-	       "babel"
-	       "cl-unicode"
-	       "str")
+               "babel"
+               "cl-unicode"
+               "str")
   :components
   ((:file "package")
    (:file "uri" :depends-on ("package"))
