@@ -153,10 +153,10 @@ URI-TEMPLATE."
 
 ;;  Cache
 
-(defvar *uri-templates* (make-hash-table :test 'equal :weakness :value))
+(defvar *uri-templates* (make-hash-table :test 'equal))
 
 (defun clear-uri-templates-cache ()
-  (setq *uri-templates* (make-hash-table :test 'equal :weakness :value)))
+  (setq *uri-templates* (make-hash-table :test 'equal)))
 
 (defun uri-template (thing)
   (typecase thing
