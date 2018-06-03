@@ -24,6 +24,7 @@
   (:export
    ;;  URI
    #:canonical-document-uri
+   #:%-encode
    #:%-encode-char
    #:to-url
    #:unaccent
